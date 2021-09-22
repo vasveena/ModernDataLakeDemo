@@ -7,7 +7,7 @@ import org.apache.kafka.clients.producer.{ProducerConfig, KafkaProducer, Produce
 import java.util.HashMap
 
 val trip_update_topic = "trip_update_topic"
-val vehicle_topic = "vehicle_topic"
+val trip_status_topic = "trip_status_topic"
 val broker = "<replace MSK bootstrap string>"
 
 object MTASubwayTripUpdates extends Serializable {
@@ -35,31 +35,31 @@ object MTASubwayTripUpdates extends Serializable {
         //Create a datastream from trip update topic
         val trip_update_df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", broker).option("subscribe", trip_update_topic).option("startingOffsets", "latest").option("failOnDataLoss","false").load()
 
-        //Create a datastream from vehicle topic
-        val vehicle_df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", broker).option("subscribe", vehicle_topic).option("startingOffsets", "latest").option("failOnDataLoss","false").load()
+        //Create a datastream from trip status topic
+        val trip_status_df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", broker).option("subscribe", trip_status_topic).option("startingOffsets", "latest").option("failOnDataLoss","false").load()
 
         // define schema of data
 
         val trip_update_schema = new StructType().add("trip", new StructType().add("tripId","string").add("startTime","string").add("startDate","string").add("routeId","string")).add("stopTimeUpdate",ArrayType(new StructType().add("arrival",new StructType().add("time","string")).add("stopId","string").add("departure",new StructType().add("time","string"))))
 
-        val vehicle_schema = new StructType().add("trip", new StructType().add("tripId","string").add("startTime","string").add("startDate","string").add("routeId","string")).add("currentStopSequence","integer").add("currentStatus", "string").add("timestamp", "string").add("stopId","string")
+        val trip_status_schema = new StructType().add("trip", new StructType().add("tripId","string").add("startTime","string").add("startDate","string").add("routeId","string")).add("currentStopSequence","integer").add("currentStatus", "string").add("timestamp", "string").add("stopId","string")
 
         // covert datastream into a datasets and apply schema
         val trip_update_ds = trip_update_df.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)").as[(String, String)]
         val trip_update_ds_schema = trip_update_ds.select(from_json($"value", trip_update_schema).as("data")).select("data.*")
         trip_update_ds_schema.printSchema()
 
-        val vehicle_ds = vehicle_df.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)").as[(String, String)]
-        val vehicle_ds_schema = vehicle_ds.select(from_json($"value", vehicle_schema).as("data")).select("data.*")
-        vehicle_ds_schema.printSchema()
+        val trip_status_ds = trip_status_df.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)").as[(String, String)]
+        val trip_status_ds_schema = trip_status_ds.select(from_json($"value", trip_status_schema).as("data")).select("data.*")
+        trip_status_ds_schema.printSchema()
 
-        val vehicle_ds_unnest = vehicle_ds_schema.select("trip.*","currentStopSequence","currentStatus","timestamp","stopId")
+        val trip_status_ds_unnest = trip_status_ds_schema.select("trip.*","currentStopSequence","currentStatus","timestamp","stopId")
 
         val trip_update_ds_unnest = trip_update_ds_schema.select($"trip.*", $"stopTimeUpdate.arrival.time".as("arrivalTime"), $"stopTimeUpdate.departure.time".as("depatureTime"), $"stopTimeUpdate.stopId")
 
         val trip_update_ds_unnest2 = trip_update_ds_unnest.withColumn("numOfFutureStops", size($"arrivalTime")).withColumnRenamed("stopId","futureStopIds")
 
-        val joined_ds = trip_update_ds_unnest2.join(vehicle_ds_unnest, Seq("tripId","routeId","startTime","startDate")).withColumn("startTime",(col("startTime").cast("timestamp"))).withColumn("currentTs",from_unixtime($"timestamp".divide(1000))).drop("startDate").drop("timestamp")
+        val joined_ds = trip_update_ds_unnest2.join(trip_status_ds_unnest, Seq("tripId","routeId","startTime","startDate")).withColumn("startTime",(col("startTime").cast("timestamp"))).withColumn("currentTs",from_unixtime($"timestamp".divide(1000))).drop("startDate").drop("timestamp")
 
         joined_ds.printSchema()
 
