@@ -15,7 +15,7 @@ class MTARealTime(object):
         self.api_key = os.getenv('MTA_API_KEY')
         self.kafka_tripupdate_topic = 'trip_update_topic'
         self.kafka_vehicle_topic = 'vehicle_topic'
-        self.kafka_producer = KafkaProducer(bootstrap_servers=['b-1.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092','b-3.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092','b-2.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092'])
+        self.kafka_producer = KafkaProducer(bootstrap_servers=['<replace MSK bootstrap string>'])
 
     def produce_trip_updates(self):
         feed = gtfs_realtime_pb2.FeedMessage()

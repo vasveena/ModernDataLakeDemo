@@ -28,13 +28,10 @@ Following are the commands to create Kafka topic and obtain bootstrap brokers to
 
 aws kafka describe-cluster --region us-east-1 --cluster-arn arn:aws:kafka:us-east-1:620614497509:cluster/test/2dbb304e-79fe-4beb-a02d-35e0fea4524b-2 -> copy the "ZookeeperConnectString" from returned JSON
 
-bin/kafka-topics.sh --create --zookeeper "z-3.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:2181,z-2.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:2181,z-1.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:2181" --replication-factor 3 --partitions 1 --topic trip_update_topic
-bin/kafka-topics.sh --create --zookeeper "z-3.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:2181,z-2.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:2181,z-1.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:2181" --replication-factor 3 --partitions 1 --topic vehicle_topic
+bin/kafka-topics.sh --create --zookeeper "<zookeeper string>" --replication-factor 3 --partitions 1 --topic trip_update_topic
+bin/kafka-topics.sh --create --zookeeper "<zookeeper string>" --replication-factor 3 --partitions 1 --topic vehicle_topic
 
 aws kafka get-bootstrap-brokers --cluster-arn "arn:aws:kafka:us-east-1:620614497509:cluster/test/2dbb304e-79fe-4beb-a02d-35e0fea4524b-2" -> copy the bootstrap servers string
-{
-    "BootstrapBrokerString": "b-2.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092,b-1.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092,b-3.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092"
-}
 
 Copy the train_arrival_producer.py into an EC2 instance and modify the bootstrap servers
 
@@ -47,8 +44,8 @@ On the same terminal, run train_arrival_producer.py -> python3 train_arrival_pro
 
 From a different terminal, ssh into the same EC2 instance and run the console Kafka consumer to verify the data is getting ingested.
 
-bin/kafka-console-consumer.sh --bootstrap-server "b-3.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092,b-1.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092,b-2.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092" --topic trip_update_topic
-bin/kafka-console-consumer.sh --bootstrap-server "b-3.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092,b-1.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092,b-2.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092" --topic vehicle_topic
+bin/kafka-console-consumer.sh --bootstrap-server "<bootstrap string>" --topic trip_update_topic
+bin/kafka-console-consumer.sh --bootstrap-server "<bootstrap string>" --topic vehicle_topic
 
 Create an EMR cluster (stop the kafka ingestion if needed before running steps below)
 SSH into EMR cluster, navigate to "/usr/lib/spark/jars/" and get the dependencies from maven repo

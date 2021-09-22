@@ -8,7 +8,7 @@ import java.util.HashMap
 
 val trip_update_topic = "trip_update_topic"
 val vehicle_topic = "vehicle_topic"
-val broker = "b-1.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092,b-3.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092,b-2.test.1tklkx.c2.kafka.us-east-1.amazonaws.com:9092"
+val broker = "<replace MSK bootstrap string>"
 
 object MTASubwayTripUpdates extends Serializable {
 
